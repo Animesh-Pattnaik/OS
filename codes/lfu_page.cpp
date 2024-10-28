@@ -2,45 +2,56 @@
 using namespace std;
 
 int main() {
-    int x;
+    int numPages;
     cout << "Enter the number of pages in the string: ";
-    cin >> x;
-    vector<int> temp(x);
+    cin >> numPages;
+
+    vector<int> pages(numPages);
     cout << "Enter the pages: ";
-    for (int &page : temp) cin >> page;
+    for (int &page : pages) {
+        cin >> page; // Read each page into the vector
+    }
 
-    cout << "f\tHit\tFault" << endl;
+    cout << "Frames\tHit\tFault" << endl;
 
-    for (int n = 1; n <= 7; n++) {
-        unordered_map<int, int> fr;
-        list<int> f;
-        unordered_map<int, list<int>::iterator> pp;
-        int ans = 0;
+    for (int frameSize = 1; frameSize <= 7; frameSize++) {
+        unordered_map<int, int> frequency;
+        vector<int> order;                 
+        int faults = 0;                  
 
-        for (int i = 0; i < x; i++) {
-            int page = temp[i];
+        for (int i = 0; i < numPages; i++) {
+            int currentPage = pages[i];
 
-            if (fr.find(page) != fr.end()) {
-                fr[page]++;
-                f.erase(pp[page]);
-                f.push_back(page);
-                pp[page] = --f.end();
-            } else {
-                ans++;
-                if (f.size() == n) {
-                    int temp = f.front();
-                    for (int p : f) {
-                        if (fr[p] < fr[temp]) temp = p;
-                    }
-                    f.erase(pp[temp]);
-                    fr.erase(temp);
-                    pp.erase(temp);
+            if (frequency.find(currentPage) != frequency.end()) {
+                frequency[currentPage]++;
+                auto it = find(order.begin(), order.end(), currentPage);
+                if (it != order.end()) {
+                    order.erase(it);    
                 }
-                fr[page]++;
-                f.push_back(page);
-                pp[page] = --f.end();
+                order.push_back(currentPage);
+            } else {
+                faults++;
+
+                if (order.size() == frameSize) {
+                    int lfuPage = order[0];
+
+                    for (int p : order) { 
+                        if (frequency[p] < frequency[lfuPage]) {
+                            lfuPage = p;
+                        }
+                    }
+
+                    order.erase(find(order.begin(), order.end(), lfuPage)); 
+                    frequency.erase(lfuPage);
+                }
+
+                frequency[currentPage]++;            
+                order.push_back(currentPage);         
             }
         }
-        cout << n << "\t" << x - ans << "\t" << ans << endl;
+    
+        cout << frameSize << "\t" << numPages - faults << "\t" << faults << endl;
     }
+
+    return 0;
 }
